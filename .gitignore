@@ -1,0 +1,13 @@
+# Environment variables (NEVER PUSH THESE!)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+
+# Django Database & Media
+db.sqlite3
+media/
