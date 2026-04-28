@@ -1,0 +1,20 @@
+<div class="container mt-4">
+    <h1>Latest Jobs</h1>
+    <hr>
+    {% if jobs %}
+        <div class="list-group">
+            {% for job in jobs %}
+                <a href="{% url 'job_detail' job.slug %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ job.title }}</h5>
+                        <small>{{ job.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    <p class="mb-1 text-muted">{{ job.company.name }} - {{ job.location }}</p>
+                    <small>Experience: {{ job.experience_min }}-{% if job.experience_max %}{{ job.experience_max }}{% else %}+{% endif %} yrs | Type: {{ job.get_job_type_display }}</small>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No jobs available right now. Check back later!</p>
+    {% endif %}
+</div>

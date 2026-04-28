@@ -1,0 +1,35 @@
+<!-- applications/templates/applications/candidate_dashboard.html -->
+<div class="container mt-4">
+    <h2>My Applications</h2>
+    <hr>
+    
+    {% if applications %}
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Applied On</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                    <tr>
+                        <td>{{ app.job.title }}</td>
+                        <td>{{ app.job.company.name }}</td>
+                        <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                        <td>
+                            <!-- Bootstrap badges for status colors -->
+                            <span class="badge bg-{{ app.status|cut:' '|lower }}">
+                                {{ app.status|title }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven't applied to any jobs yet.</p>
+    {% endif %}
+</div>

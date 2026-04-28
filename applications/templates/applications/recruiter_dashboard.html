@@ -1,0 +1,68 @@
+<!-- applications/templates/applications/recruiter_dashboard.html -->
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Received Applications</h2>
+        <a href="{% url 'post_job' %}" class="btn btn-primary">+ Post New Job</a>
+    </div>
+    <hr>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if applications %}
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Candidate Email</th>
+                    <th>Job Title</th>
+                    <th>AI Match</th>
+                    <th>Applied On</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                    <tr>
+                        <td>{{ app.applicant.email }}</td>
+                        <td>{{ app.job.title }}</td>
+                        
+                        <!-- --- THE AI MATCH SCORE BADGE --- -->
+                        <td>
+                            {% if app.match_score is not None %}
+                                {% if app.match_score >= 80 %}
+                                    <span class="badge bg-success fs-6">{{ app.match_score }}%</span>
+                                {% elif app.match_score >= 60 %}
+                                    <span class="badge bg-warning text-dark fs-6">{{ app.match_score }}%</span>
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">{{ app.match_score }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary fs-6">N/A</span>
+                            {% endif %}
+                        </td>
+                        <!-- --------------------------------- -->
+                        
+                        <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                        <td>{{ app.status|title }}</td>
+                        <td>
+                            {% if app.status != 'accepted' %}
+                                <a href="{% url 'update_application_status' app.id 'shortlisted' %}" class="btn btn-sm btn-warning">Shortlist</a>
+                                <a href="{% url 'update_application_status' app.id 'rejected' %}" class="btn btn-sm btn-danger">Reject</a>
+                            {% endif %}
+                            {% if app.status == 'shortlisted' %}
+                                <a href="{% url 'update_application_status' app.id 'accepted' %}" class="btn btn-sm btn-success">Accept</a>
+                            {% endif %}
+                            
+                            <a href="{{ app.resume.url }}" target="_blank" class="btn btn-sm btn-secondary">View Resume</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No one has applied to your jobs yet.</p>
+    {% endif %}
+</div>
