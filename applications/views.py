@@ -1,10 +1,11 @@
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from jobs.models import Job
 from .forms import ApplicationForm
 from .models import Application
-from .utils import extract_text_from_pdf, get_ai_match_score
+from .tasks import calculate_ai_match_score  # <--- IMPORT THE CELERY TASK
 
 
 @login_required(login_url='login')
@@ -22,28 +23,22 @@ def apply_to_job(request, job_id):
     if request.method == 'POST':
         form = ApplicationForm(request.POST, request.FILES)
         if form.is_valid():
-            application = form.save(commit=False)
-            application.job = job
-            application.applicant = request.user
-            application.save() 
-            
-            # 1. Get the path of the uploaded PDF
-            pdf_path = application.resume.path
-            
-            # 2. Read the text from the PDF
-            resume_text = extract_text_from_pdf(pdf_path)
-            
-            # 3. If we found text, ask Google Gemini AI for a score
-            if resume_text:
-                job_description = f"{job.title} {job.description} {job.requirements}"
-                score = get_ai_match_score(resume_text, job_description)
+            try:
+                application = form.save(commit=False)
+                application.job = job
+                application.applicant = request.user
+                application.save() 
                 
-                # 4. Save the score to the database
-                application.match_score = score
-                application.save(update_fields=['match_score'])
+                # FIRE OFF THE BACKGROUND TASK!
+                # .delay() means "do this in the background instantly"
+                calculate_ai_match_score.delay(application.id)
                 
-            messages.success(request, "Your application has been submitted successfully!")
-            return redirect('job_detail', slug=job.slug)
+                messages.success(request, "Application submitted! AI is analyzing the resume...")
+                return redirect('job_detail', slug=job.slug)
+            
+            except IntegrityError:
+                messages.error(request, "You have already applied to this job!")
+                return redirect('job_detail', slug=job.slug)
         else:
             messages.error(request, "Please fix the errors below.")
     else:
